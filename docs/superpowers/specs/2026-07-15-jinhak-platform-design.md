@@ -20,9 +20,10 @@
 
 ## 3. 호스팅 / 주소
 
-- 새 GitHub 저장소 **`specialzoker.github.io`** (사용자 루트 Pages 저장소).
-- 배포 주소: **https://specialzoker.github.io/** (가장 짧은 대표 주소).
+- 새 GitHub 저장소 **`sujifather`** (프로젝트 Pages 저장소). ※ 루트 `specialzoker.github.io`는 이미 다른 사이트가 사용 중이라 하위 경로로 배포한다.
+- 배포 주소: **https://specialzoker.github.io/sujifather/**.
 - 배포 방식: GitHub Pages. 저장소 루트의 `index.html`을 서빙.
+- 프로젝트 사이트(하위 경로)이므로 페이지 내부 링크·자원은 **상대 경로**를 쓴다. 다른 앱으로의 링크는 절대 주소(`https://specialzoker.github.io/<앱>/`)를 그대로 사용한다.
 - 기존 앱 주소는 그대로 유지:
   - 대입통합검색기 — https://specialzoker.github.io/daip-search/
   - 2027 수시 상담용 — https://specialzoker.github.io/counselting/
@@ -67,6 +68,6 @@
 
 ## 8. 성공 기준
 
-- https://specialzoker.github.io/ 에 접속하면 허브가 뜨고, 네 앱 링크가 모두 정상 동작(새 탭)한다.
+- https://specialzoker.github.io/sujifather/ 에 접속하면 허브가 뜨고, 네 앱 링크가 모두 정상 동작(새 탭)한다.
 - 모바일·데스크톱 양쪽에서 레이아웃이 깨지지 않는다.
 - 새 앱을 추가할 때 목록 데이터에 한 항목만 넣으면 되는 구조다.
