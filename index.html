@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>진학 플랫폼 · 광명북고 정현석</title>
+  <style>
+    :root{
+      --green:#24503a; --green-mid:#2f6b45; --green-soft:#3d7a54;
+      --cream:#f5f6ee; --card:#fffdf7; --line:#e2e5d3;
+      --ink:#24503a; --muted:#7a8a72;
+      --shadow:0 1px 2px rgba(36,80,58,.08);
+      --radius:10px;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0; background:var(--cream); color:var(--ink);
+      font-family:system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif;
+      line-height:1.5;
+    }
+    .site-header{ text-align:center; padding:40px 20px 8px; }
+    .site-header h1{ margin:0; font-size:1.9rem; font-weight:800; color:var(--green); letter-spacing:-.01em; }
+    .site-header .subtitle{ margin:6px 0 0; color:var(--muted); font-size:.95rem; }
+    main{ max-width:640px; margin:0 auto; padding:20px 16px 8px; }
+    .cat-section{ margin-bottom:22px; }
+    .cat-title{
+      font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+      color:var(--green-soft); margin:0 0 10px; padding-bottom:5px;
+      border-bottom:1px solid var(--line);
+    }
+    .app-tile{
+      display:flex; align-items:center; gap:14px;
+      background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+      padding:14px 16px; margin-bottom:10px; text-decoration:none; color:inherit;
+      box-shadow:var(--shadow); transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    .app-tile:hover{ transform:translateY(-2px); box-shadow:0 6px 16px rgba(36,80,58,.14); border-color:var(--green-soft); }
+    .app-icon{
+      flex:0 0 auto; width:44px; height:44px; border-radius:10px;
+      background:var(--green-mid); color:#fff;
+      display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+    }
+    .app-text{ display:flex; flex-direction:column; min-width:0; }
+    .app-name{ font-weight:700; font-size:1.02rem; color:var(--green); }
+    .app-desc{ font-size:.86rem; color:var(--muted); }
+    .site-footer{ text-align:center; color:var(--muted); font-size:.8rem; padding:24px 16px 40px; }
+    @media (max-width:480px){
+      .site-header{ padding-top:28px; }
+      .site-header h1{ font-size:1.6rem; }
+      .app-tile{ padding:12px 13px; gap:11px; }
+      .app-icon{ width:38px; height:38px; font-size:1.15rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <h1>진학 플랫폼</h1>
+    <p class="subtitle">광명북고 진로진학부장 정현석</p>
+  </header>
+  <main id="app-list"></main>
+  <footer class="site-footer">
+    경기진협 자료개발국 간사 · 광명북고 진로진학부장 정현석
+  </footer>
+
+  <script>
+    // 새 앱 추가: 아래 APPS 배열에 객체 하나만 넣으면 됩니다.
+    // category 값은 CATEGORY_ORDER에 있는 이름을 쓰세요(없으면 CATEGORY_ORDER에도 추가).
+    const CATEGORY_ORDER = ["대학 찾기·판정", "학습 보조"];
+
+    const APPS = [
+      { name: "대입통합검색기", desc: "성적 입력 → 권역·계열·전형별 대학 판정",
+        url: "https://specialzoker.github.io/daip-search/", category: "대학 찾기·판정", icon: "🔎" },
+      { name: "2027 수시 상담용", desc: "수시 대학 판정 (수시 NAVI)",
+        url: "https://specialzoker.github.io/counselting/", category: "대학 찾기·판정", icon: "🎯" },
+      { name: "논술 대학 추천기", desc: "수능 성적 기반 논술전형 대학 추천",
+        url: "https://specialzoker.github.io/nonsul/", category: "대학 찾기·판정", icon: "✍️" },
+      { name: "오답 유사문제 추천", desc: "틀린 문제 입력 → 유사문제 추천",
+        url: "https://specialzoker.github.io/wrong/", category: "학습 보조", icon: "📚" },
+    ];
+
+    function renderApps() {
+      const root = document.getElementById("app-list");
+      root.innerHTML = "";
+      for (const category of CATEGORY_ORDER) {
+        const apps = APPS.filter(a => a.category === category);
+        if (apps.length === 0) continue;
+        const section = document.createElement("section");
+        section.className = "cat-section";
+        const h = document.createElement("h2");
+        h.className = "cat-title";
+        h.textContent = category;
+        section.appendChild(h);
+        for (const app of apps) {
+          const a = document.createElement("a");
+          a.className = "app-tile";
+          a.href = app.url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.innerHTML =
+            '<span class="app-icon" aria-hidden="true">' + app.icon + '</span>' +
+            '<span class="app-text"><span class="app-name"></span>' +
+            '<span class="app-desc"></span></span>';
+          a.querySelector(".app-name").textContent = app.name;
+          a.querySelector(".app-desc").textContent = app.desc;
+          section.appendChild(a);
+        }
+        root.appendChild(section);
+      }
+    }
+    renderApps();
+  </script>
+</body>
+</html>
