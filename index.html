@@ -18,7 +18,7 @@
       font-family:system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif;
       line-height:1.5;
     }
-    .site-header{ text-align:center; padding:40px 20px 8px; }
+    .site-header{ position:relative; text-align:center; padding:40px 20px 8px; }
     .site-header h1{ margin:0; font-size:1.9rem; font-weight:800; color:var(--green); letter-spacing:-.01em; }
     .site-header .subtitle{ margin:6px 0 0; color:var(--muted); font-size:.95rem; }
     main{ max-width:640px; margin:0 auto; padding:20px 16px 8px; }
@@ -44,16 +44,108 @@
     .app-name{ font-weight:700; font-size:1.02rem; color:var(--green); }
     .app-desc{ font-size:.86rem; color:var(--muted); }
     .site-footer{ text-align:center; color:var(--muted); font-size:.8rem; padding:24px 16px 40px; }
+
+    /* 로그아웃(로그인 후 우상단) */
+    .user-bar{ position:absolute; top:14px; right:14px; display:none; align-items:center; gap:8px; }
+    .user-bar .who{ font-size:.72rem; color:var(--muted); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .logout-btn{
+      display:none; padding:5px 10px; font-size:.72rem; font-weight:700; cursor:pointer;
+      background:transparent; color:var(--green-soft); border:1px solid var(--line); border-radius:7px;
+    }
+    .logout-btn:hover{ border-color:var(--green-soft); background:#eef3ec; }
+
+    /* 로그인 게이트 */
+    #loginScreen{
+      position:fixed; inset:0; background:var(--cream); z-index:9999;
+      display:flex; align-items:center; justify-content:center; padding:20px;
+    }
+    .login-box{
+      max-width:420px; width:100%; background:var(--card);
+      border:1px solid var(--line); border-radius:14px; padding:32px 28px;
+      box-shadow:0 8px 30px rgba(36,80,58,.12); text-align:center;
+    }
+    .login-logo{ font-size:1.5rem; font-weight:800; color:var(--green); }
+    .login-sub{ font-size:12px; color:var(--muted); line-height:1.6; margin:10px 0 20px; }
+    .login-sub strong{ color:var(--green-soft); }
+    .login-label{ display:block; text-align:left; font-size:12px; color:var(--green-soft); font-weight:700; margin-bottom:4px; }
+    .login-input{
+      width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:8px;
+      font-size:14px; background:#fff; color:var(--ink);
+    }
+    .login-input:focus{ outline:none; border-color:var(--green-soft); }
+    .login-btn{
+      width:100%; margin-top:12px; padding:11px; background:var(--green-mid); color:#fff;
+      border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer;
+    }
+    .login-btn:hover{ background:var(--green); }
+    .login-btn:disabled{ opacity:.6; cursor:default; }
+    .login-err{ margin-top:10px; color:#b91c1c; font-size:12px; min-height:16px; }
+    .login-linkrow{ margin-top:14px; text-align:center; font-size:12px; color:var(--muted); }
+    .login-linkrow a{ color:var(--green-soft); text-decoration:underline; margin-left:4px; }
+
     @media (max-width:480px){
       .site-header{ padding-top:28px; }
       .site-header h1{ font-size:1.6rem; }
       .app-tile{ padding:12px 13px; gap:11px; }
       .app-icon{ width:38px; height:38px; font-size:1.15rem; }
+      .user-bar .who{ display:none; }
     }
   </style>
+
+  <!-- Firebase (통합검색기와 동일한 search-alluniv 프로젝트) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
+  <!-- 로그인 게이트 -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <div class="login-logo">진학 플랫폼</div>
+      <div class="login-sub">
+        경기진협 자료개발국 간사<br>
+        광명북고 진로진학부장 <strong>정현석</strong><br><br>
+        허가된 이메일로 접속하세요<br>
+        처음이라면 아래에서 <strong>접속 신청</strong>을 해주세요 (승인까지 시간이 걸릴 수 있습니다)<br>
+        허가되지 않은 접속(사교육 등)을 막기 위해 접속 로그가 기록됩니다. 동의하지 않으시면 접속하지 않으시길 바랍니다.
+      </div>
+
+      <!-- 로그인 폼 -->
+      <div id="loginFormBox">
+        <label class="login-label">이메일 주소</label>
+        <input class="login-input" id="loginEmail" type="email" placeholder="example@school.kr"
+          onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button class="login-btn" id="loginBtn" onclick="doLogin()">접속하기</button>
+        <div class="login-err" id="loginErr"></div>
+        <div class="login-linkrow">
+          아직 권한이 없으신가요?
+          <a href="#" onclick="showRequestForm();return false;">접속 신청하기</a>
+        </div>
+      </div>
+
+      <!-- 접속 신청 폼 -->
+      <div id="requestFormBox" style="display:none;">
+        <label class="login-label">이메일 주소</label>
+        <input class="login-input" id="reqEmail" type="email" placeholder="example@school.kr"/>
+        <label class="login-label" style="margin-top:8px;">이름</label>
+        <input class="login-input" id="reqName" type="text" placeholder="홍길동"/>
+        <label class="login-label" style="margin-top:8px;">소속 학교</label>
+        <input class="login-input" id="reqSchool" type="text" placeholder="○○고등학교"
+          onkeydown="if(event.key==='Enter')submitAccessRequest()"/>
+        <button class="login-btn" id="reqBtn" onclick="submitAccessRequest()" style="margin-top:12px;">접속 신청하기</button>
+        <div class="login-err" id="reqErr"></div>
+        <div id="reqOk" style="display:none;margin-top:10px;padding:10px;background:#e7f2ea;border:1px solid #b7d9c3;border-radius:6px;color:#24503a;font-size:12px;line-height:1.5;text-align:center;"></div>
+        <div class="login-linkrow">
+          <a href="#" onclick="showLoginForm();return false;" style="color:var(--muted);">← 로그인으로 돌아가기</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <header class="site-header">
+    <div class="user-bar" id="userBar">
+      <span class="who" id="userEmailDisplay">—</span>
+      <button class="logout-btn" id="logoutBtn" onclick="doLogout()">로그아웃</button>
+    </div>
     <h1>진학 플랫폼</h1>
     <p class="subtitle">광명북고 진로진학부장 정현석</p>
   </header>
@@ -63,10 +155,8 @@
   </footer>
 
   <script>
-    // 새 앱 추가: 아래 APPS 배열에 객체 하나만 넣으면 됩니다.
-    // category 값은 CATEGORY_ORDER에 있는 이름을 쓰세요(없으면 CATEGORY_ORDER에도 추가).
+    // ── 앱 목록 (새 앱은 여기에 한 줄 추가) ──
     const CATEGORY_ORDER = ["대학 찾기·판정", "학습 보조"];
-
     const APPS = [
       { name: "대입통합검색기", desc: "성적 입력 → 권역·계열·전형별 대학 판정",
         url: "https://specialzoker.github.io/daip-search/", category: "대학 찾기·판정", icon: "🔎" },
@@ -108,6 +198,168 @@
       }
     }
     renderApps();
+
+    // ════════════════════════════════════════════════════
+    // 로그인 게이트 — 통합검색기와 같은 Firebase(search-alluniv) 명단 공유.
+    // 같은 도메인이라 로그인 기록(localStorage 'snavi_user')이 통합검색기와 공유됨.
+    // 명단 추가·승인은 통합검색기 관리자 화면에서 관리합니다.
+    // ════════════════════════════════════════════════════
+    const firebaseConfig = {
+      apiKey: "AIzaSyAF0-GXeRRrtUsdQgS3L-CjkAL4eUrM3cc",
+      authDomain: "search-alluniv.firebaseapp.com",
+      projectId: "search-alluniv",
+      storageBucket: "search-alluniv.firebasestorage.app",
+      messagingSenderId: "395338642740",
+      appId: "1:395338642740:web:c902a7e5f39e61adce2161"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let currentUser = null;
+
+    async function doLogin() {
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const btn   = document.getElementById('loginBtn');
+      const err   = document.getElementById('loginErr');
+      err.textContent = '';
+      if (!email) { err.textContent = '이메일을 입력하세요.'; return; }
+      if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { err.textContent = '올바른 이메일 형식이 아닙니다.'; return; }
+
+      btn.disabled = true; btn.textContent = '확인 중...';
+
+      // Firestore allowed_emails 조회
+      try {
+        const doc = await db.collection('allowed_emails').doc(email).get();
+        if (!doc.exists) {
+          let extraMsg = '';
+          try {
+            const reqDoc = await db.collection('access_requests').doc(email).get();
+            if (reqDoc.exists) {
+              const status = (reqDoc.data() || {}).status || 'pending';
+              if (status === 'pending')       extraMsg = ' (신청이 접수되어 검토 중입니다)';
+              else if (status === 'rejected') extraMsg = ' (신청이 거절되었습니다)';
+            } else {
+              extraMsg = ' — 아래 "접속 신청하기"를 이용하세요.';
+            }
+          } catch(_) {}
+          err.innerHTML = '접근 권한이 없습니다.' + extraMsg;
+          localStorage.removeItem('snavi_user');
+          btn.disabled = false; btn.textContent = '접속하기';
+          return;
+        }
+      } catch(e) {
+        err.textContent = '서버 연결 실패: ' + e.message;
+        btn.disabled = false; btn.textContent = '접속하기';
+        return;
+      }
+
+      // 접속 로그 기록
+      try {
+        await db.collection('access_logs').add({
+          email,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          ua: navigator.userAgent.substring(0, 100),
+          app: 'hub',
+        });
+      } catch(e) { console.warn('로그 기록 실패:', e); }
+
+      // 로그인 완료 → 게이트 내림
+      currentUser = email;
+      localStorage.setItem('snavi_user', email);
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('userBar').style.display = 'flex';
+      document.getElementById('logoutBtn').style.display = 'inline-block';
+      document.getElementById('logoutBtn').title = email;
+      document.getElementById('userEmailDisplay').textContent = email;
+      btn.disabled = false; btn.textContent = '접속하기';
+    }
+
+    function doLogout() {
+      if (!confirm('로그아웃 하시겠습니까?')) return;
+      currentUser = null;
+      localStorage.removeItem('snavi_user');
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('userBar').style.display = 'none';
+      document.getElementById('logoutBtn').style.display = 'none';
+      document.getElementById('loginEmail').value = '';
+      document.getElementById('loginErr').textContent = '';
+      showLoginForm();
+    }
+
+    // 로그인 ↔ 신청 폼 전환
+    function showRequestForm() {
+      document.getElementById('loginFormBox').style.display   = 'none';
+      document.getElementById('requestFormBox').style.display = 'block';
+      const e = document.getElementById('loginEmail').value.trim();
+      if (e) document.getElementById('reqEmail').value = e;
+      document.getElementById('reqErr').textContent = '';
+      document.getElementById('reqOk').style.display = 'none';
+    }
+    function showLoginForm() {
+      document.getElementById('loginFormBox').style.display   = 'block';
+      document.getElementById('requestFormBox').style.display = 'none';
+    }
+
+    // 접속 신청 제출 (통합검색기와 같은 access_requests)
+    async function submitAccessRequest() {
+      const email  = document.getElementById('reqEmail').value.trim().toLowerCase();
+      const name   = document.getElementById('reqName').value.trim();
+      const school = document.getElementById('reqSchool').value.trim();
+      const btn    = document.getElementById('reqBtn');
+      const err    = document.getElementById('reqErr');
+      const ok     = document.getElementById('reqOk');
+      err.textContent = ''; ok.style.display = 'none';
+
+      if (!email)  { err.textContent = '이메일을 입력하세요.'; return; }
+      if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { err.textContent = '올바른 이메일 형식이 아닙니다.'; return; }
+      if (!name)   { err.textContent = '이름을 입력하세요.'; return; }
+      if (!school) { err.textContent = '소속 학교를 입력하세요.'; return; }
+
+      btn.disabled = true; btn.textContent = '신청 중...';
+      try {
+        const allowed = await db.collection('allowed_emails').doc(email).get();
+        if (allowed.exists) {
+          err.textContent = '이미 허가된 이메일입니다. 로그인해 주세요.';
+          btn.disabled = false; btn.textContent = '접속 신청하기';
+          return;
+        }
+        const existing = await db.collection('access_requests').doc(email).get();
+        if (existing.exists) {
+          const status = (existing.data() || {}).status || 'pending';
+          if (status === 'pending') {
+            err.textContent = '이미 신청이 접수되었습니다. 승인을 기다려 주세요.';
+            btn.disabled = false; btn.textContent = '접속 신청하기';
+            return;
+          }
+          if (status === 'rejected') {
+            err.textContent = '이전 신청이 거절되었습니다. 관리자에게 문의해 주세요.';
+            btn.disabled = false; btn.textContent = '접속 신청하기';
+            return;
+          }
+        }
+        await db.collection('access_requests').doc(email).set({
+          email, name, school,
+          status: 'pending',
+          requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          ua: navigator.userAgent.substring(0, 100),
+        });
+        ok.style.display = 'block';
+        ok.innerHTML = '✓ 신청이 접수되었습니다.<br>관리자 승인 후 로그인 가능합니다.';
+        document.getElementById('reqEmail').value  = '';
+        document.getElementById('reqName').value   = '';
+        document.getElementById('reqSchool').value = '';
+      } catch(e) {
+        err.textContent = '신청 실패: ' + e.message;
+      }
+      btn.disabled = false; btn.textContent = '접속 신청하기';
+    }
+
+    // 저장된 계정이 있으면 자동 로그인 (통합검색기와 공유)
+    const savedUser = localStorage.getItem('snavi_user');
+    if (savedUser) {
+      document.getElementById('loginEmail').value = savedUser;
+      doLogin();
+    }
   </script>
 </body>
 </html>
